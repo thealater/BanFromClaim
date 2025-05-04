@@ -40,6 +40,8 @@ public class RegionListener implements Listener {
 		if (regionID == null) return;
 
 		final UUID ownerUUID = regionHook.getOwnerID(regionID);
+		if (ownerUUID == null) return;
+
 		final Player target = PlayerRidePlayer.getPassenger(player);
 		boolean hasAttacked = false;
 

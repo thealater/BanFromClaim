@@ -86,7 +86,7 @@ public class GriefPreventionHook implements RegionHook, Listener {
 	@Override
 	public UUID getOwnerID(String regionID) {
 		final Claim claim = GriefPrevention.instance.dataStore.getClaim(Long.parseLong(regionID));
-		return claim.getOwnerID();
+		return claim != null ? claim.getOwnerID() : null;
 	}
 
 	@Override

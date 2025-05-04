@@ -105,7 +105,7 @@ public class GriefDefenderHook implements RegionHook {
 	public UUID getOwnerID(String regionID) {
 		final Core gd = GriefDefender.getCore();
 		final Claim claim = gd.getClaim(UUID.fromString(regionID));
-		return claim.getOwnerUniqueId();
+		return claim != null ? claim.getOwnerUniqueId() : null;
 	}
 
 	@Override

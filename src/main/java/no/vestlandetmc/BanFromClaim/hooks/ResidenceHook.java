@@ -93,7 +93,7 @@ public class ResidenceHook implements RegionHook, Listener {
 	public UUID getOwnerID(String regionID) {
 		final ResidenceInterface res = Residence.getInstance().getResidenceManagerAPI();
 		final ClaimedResidence region = res.getByName(regionID);
-		return region.getOwnerUUID();
+		return region != null ? region.getOwnerUUID() : null;
 	}
 
 	@Override
