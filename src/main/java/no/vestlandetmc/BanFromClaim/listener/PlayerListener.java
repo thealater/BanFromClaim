@@ -16,9 +16,9 @@ public class PlayerListener implements Listener {
 
 		if (player.isOp()) {
 			if (UpdateNotification.isUpdateAvailable()) {
-				MessageHandler.sendMessage(player, "&2" + BfcPlugin.getPlugin().getDescription().getName() + " &ais outdated. Update is available!");
+				MessageHandler.sendMessage(player, "&2" + BfcPlugin.getPlugin().getPluginMeta().getName() + " &ais outdated. Update is available!");
 				MessageHandler.sendMessage(player, "&aYour version is &2" + UpdateNotification.getCurrentVersion() + " &aand can be updated to version &2" + UpdateNotification.getLatestVersion());
-				MessageHandler.sendMessage(player, "&aGet the new update at &2https://www.spigotmc.org/resources/" + UpdateNotification.getProjectId());
+				MessageHandler.sendMessage(player, "&aGet the new update at &2https://modrinth.com/plugin/" + UpdateNotification.getProjectSlug());
 			}
 		}
 	}
