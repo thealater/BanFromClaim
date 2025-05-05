@@ -1,0 +1,20 @@
+name: BanFromClaim
+version: '${version}'
+main: no.vestlandetmc.BanFromClaim.BfcPlugin
+api-version: '1.21'
+prefix: BanFromClaim
+load: POSTWORLD
+authors: [ Baktus_79 ]
+description: Addon for GriefPrevention and GriefDefender that let you ban players from entering your claim.
+website: https://www.vestlandetmc.no
+dependencies:
+  server:
+    GriefPrevention:
+      load: BEFORE
+      required: false
+    GriefDefender:
+      load: BEFORE
+      required: false
+    Residence:
+      load: BEFORE
+      required: false
