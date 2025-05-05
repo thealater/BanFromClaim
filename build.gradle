@@ -1,11 +1,11 @@
 plugins {
     id 'java'
-    id 'io.freefair.lombok' version '8.13'
+    id 'io.freefair.lombok' version '8.13.1'
     id "io.github.goooler.shadow" version '8.1.8'
 }
 
 group = 'no.vestlandetmc'
-version = '1.7.8'
+version = '1.8.0'
 
 repositories {
     mavenCentral()
@@ -16,7 +16,7 @@ repositories {
 
 dependencies {
     compileOnly fileTree(dir: 'libs', include: ['*.jar'])
-    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.21.5-R0.1-SNAPSHOT'
     compileOnly 'com.github.GriefPrevention:GriefPrevention:16.18.4'
     compileOnly 'com.griefdefender:api:2.1.1-SNAPSHOT'
     implementation 'org.bstats:bstats-bukkit:3.1.0'
@@ -53,7 +53,7 @@ processResources {
     def props = [version: version]
     inputs.properties props
     filteringCharset 'UTF-8'
-    filesMatching('plugin.yml') {
+    filesMatching('paper-plugin.yml') {
         expand props
     }
 }
