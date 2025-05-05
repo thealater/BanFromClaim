@@ -1,26 +1,32 @@
 package no.vestlandetmc.BanFromClaim.commands;
 
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import no.vestlandetmc.BanFromClaim.BfcPlugin;
 import no.vestlandetmc.BanFromClaim.config.Config;
 import no.vestlandetmc.BanFromClaim.config.Messages;
 import no.vestlandetmc.BanFromClaim.handler.MessageHandler;
+import no.vestlandetmc.BanFromClaim.handler.Permissions;
 import no.vestlandetmc.BanFromClaim.hooks.RegionHook;
 import no.vestlandetmc.BanFromClaim.utils.LocationFinder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-public class KfcCommand implements CommandExecutor {
+import java.util.Collection;
+
+@NullMarked
+@SuppressWarnings({"deprecation", "UnstableApiUsage"})
+public class KfcCommand implements BasicCommand {
 
 	@Override
-	public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-		if (!(sender instanceof Player player)) {
+	public void execute(CommandSourceStack commandSourceStack, String[] args) {
+		if (!(commandSourceStack.getSender() instanceof Player player)) {
 			MessageHandler.sendConsole("&cThis command can only be used in-game.");
-			return true;
+			return;
 		}
 
 		final RegionHook region = BfcPlugin.getHookManager().getActiveRegionHook();
@@ -28,12 +34,12 @@ public class KfcCommand implements CommandExecutor {
 
 		if (args.length == 0) {
 			MessageHandler.sendMessage(player, Messages.NO_ARGUMENTS);
-			return true;
+			return;
 		}
 
 		if (regionID == null) {
 			MessageHandler.sendMessage(player, Messages.OUTSIDE_CLAIM);
-			return true;
+			return;
 		}
 
 		final Player kickedPlayer = Bukkit.getPlayer(args[0]);
@@ -41,23 +47,22 @@ public class KfcCommand implements CommandExecutor {
 
 		if (kickedPlayer == null) {
 			MessageHandler.sendMessage(player, Messages.placeholders(Messages.UNVALID_PLAYERNAME, args[0], player.getDisplayName(), null));
-			return true;
+			return;
 		} else if (kickedPlayer == player) {
 			MessageHandler.sendMessage(player, Messages.KICK_SELF);
-			return true;
+			return;
 		} else if (region.isOwner(kickedPlayer, regionID)) {
 			MessageHandler.sendMessage(player, Messages.KICK_OWNER);
-			return true;
+			return;
 		}
 
 		if (kickedPlayer.hasPermission("bfc.bypass")) {
 			MessageHandler.sendMessage(player, Messages.placeholders(Messages.PROTECTED, kickedPlayer.getDisplayName(), null, null));
-			return true;
+			return;
 		}
 
 		if (!allowBan) {
 			MessageHandler.sendMessage(player, Messages.NO_ACCESS);
-			return true;
 		} else {
 			final String claimOwner = region.getClaimOwnerName(regionID);
 
@@ -81,14 +86,28 @@ public class KfcCommand implements CommandExecutor {
 					}
 
 					MessageHandler.sendMessage(kickedPlayer, Messages.placeholders(Messages.KICKED_TARGET, kickedPlayer.getName(), player.getDisplayName(), claimOwner));
-
 				}));
 			}
 		}
 
 		MessageHandler.sendMessage(player, Messages.placeholders(Messages.KICKED, kickedPlayer.getName(), null, null));
-		return true;
-
 	}
 
+	@Override
+	public Collection<String> suggest(CommandSourceStack commandSourceStack, String[] args) {
+		return Bukkit.getOnlinePlayers().stream()
+				.map(Player::getName)
+				.filter(name -> name.toLowerCase().startsWith(args[args.length - 1].toLowerCase()))
+				.toList();
+	}
+
+	@Override
+	public boolean canUse(CommandSender sender) {
+		return BasicCommand.super.canUse(sender);
+	}
+
+	@Override
+	public @Nullable String permission() {
+		return Permissions.KICK.getName();
+	}
 }

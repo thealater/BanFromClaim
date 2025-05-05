@@ -1,29 +1,34 @@
 package no.vestlandetmc.BanFromClaim.commands;
 
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import no.vestlandetmc.BanFromClaim.BfcPlugin;
 import no.vestlandetmc.BanFromClaim.config.ClaimData;
 import no.vestlandetmc.BanFromClaim.config.Config;
 import no.vestlandetmc.BanFromClaim.config.Messages;
 import no.vestlandetmc.BanFromClaim.handler.MessageHandler;
+import no.vestlandetmc.BanFromClaim.handler.Permissions;
 import no.vestlandetmc.BanFromClaim.hooks.RegionHook;
 import no.vestlandetmc.BanFromClaim.utils.LocationFinder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
-public class BfcCommand implements CommandExecutor {
+import java.util.Collection;
 
-	@SuppressWarnings("deprecation")
+@NullMarked
+@SuppressWarnings({"deprecation", "UnstableApiUsage"})
+public class BfcCommand implements BasicCommand {
+
 	@Override
-	public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-		if (!(sender instanceof Player player)) {
+	public void execute(CommandSourceStack commandSourceStack, String[] args) {
+		if (!(commandSourceStack.getSender() instanceof Player player)) {
 			MessageHandler.sendConsole("&cThis command can only be used in-game.");
-			return true;
+			return;
 		}
 
 		final RegionHook region = BfcPlugin.getHookManager().getActiveRegionHook();
@@ -31,12 +36,12 @@ public class BfcCommand implements CommandExecutor {
 
 		if (args.length == 0) {
 			MessageHandler.sendMessage(player, Messages.NO_ARGUMENTS);
-			return true;
+			return;
 		}
 
 		if (regionID == null) {
 			MessageHandler.sendMessage(player, Messages.OUTSIDE_CLAIM);
-			return true;
+			return;
 		}
 
 		final OfflinePlayer bannedPlayer = Bukkit.getOfflinePlayer(args[0]);
@@ -44,23 +49,22 @@ public class BfcCommand implements CommandExecutor {
 
 		if (bannedPlayer.getUniqueId().toString().equals(player.getUniqueId().toString())) {
 			MessageHandler.sendMessage(player, Messages.BAN_SELF);
-			return true;
+			return;
 		} else if (!bannedPlayer.hasPlayedBefore()) {
 			MessageHandler.sendMessage(player, Messages.placeholders(Messages.UNVALID_PLAYERNAME, args[0], player.getDisplayName(), null));
-			return true;
+			return;
 		} else if (region.isOwner(bannedPlayer, regionID)) {
 			MessageHandler.sendMessage(player, Messages.BAN_OWNER);
-			return true;
+			return;
 		}
 
 		if (bannedPlayer.isOnline() && bannedPlayer.getPlayer().hasPermission("bfc.bypass")) {
 			MessageHandler.sendMessage(player, Messages.placeholders(Messages.PROTECTED, bannedPlayer.getPlayer().getDisplayName(), null, null));
-			return true;
+			return;
 		}
 
 		if (!allowBan) {
 			MessageHandler.sendMessage(player, Messages.NO_ACCESS);
-			return true;
 		} else {
 			final String claimOwner = region.getClaimOwnerName(regionID);
 
@@ -97,12 +101,31 @@ public class BfcCommand implements CommandExecutor {
 				MessageHandler.sendMessage(player, Messages.ALREADY_BANNED);
 			}
 		}
-		return true;
+	}
+
+	@Override
+	public Collection<String> suggest(CommandSourceStack commandSourceStack, String[] args) {
+		String input = args.length > 0 ? args[args.length - 1].toLowerCase() : "";
+
+		return Bukkit.getOnlinePlayers().stream()
+				.map(Player::getName)
+				.filter(name -> name.toLowerCase().startsWith(input))
+				.sorted(String.CASE_INSENSITIVE_ORDER)
+				.toList();
+	}
+
+	@Override
+	public boolean canUse(CommandSender sender) {
+		return BasicCommand.super.canUse(sender);
+	}
+
+	@Override
+	public @Nullable String permission() {
+		return Permissions.BAN.getName();
 	}
 
 	private boolean setClaimData(String claimID, String bannedUUID, boolean add) {
 		final ClaimData claimData = new ClaimData();
 		return claimData.setClaimData(claimID, bannedUUID, add);
 	}
-
 }

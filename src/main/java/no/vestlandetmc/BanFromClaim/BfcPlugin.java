@@ -1,5 +1,6 @@
 package no.vestlandetmc.BanFromClaim;
 
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import lombok.Getter;
 import no.vestlandetmc.BanFromClaim.apiversions.VersionManager;
 import no.vestlandetmc.BanFromClaim.commands.*;
@@ -7,6 +8,7 @@ import no.vestlandetmc.BanFromClaim.config.ClaimData;
 import no.vestlandetmc.BanFromClaim.config.Config;
 import no.vestlandetmc.BanFromClaim.config.Messages;
 import no.vestlandetmc.BanFromClaim.handler.MessageHandler;
+import no.vestlandetmc.BanFromClaim.handler.Permissions;
 import no.vestlandetmc.BanFromClaim.hooks.HookManager;
 import no.vestlandetmc.BanFromClaim.listener.CombatMode;
 import no.vestlandetmc.BanFromClaim.listener.PlayerListener;
@@ -21,7 +23,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
+@SuppressWarnings("UnstableApiUsage")
 public class BfcPlugin extends JavaPlugin {
 
 	@Getter
@@ -38,27 +42,58 @@ public class BfcPlugin extends JavaPlugin {
 		plugin = this;
 
 		MessageHandler.sendConsole("&2 ___ ___ ___");
-		MessageHandler.sendConsole("&2| _ ) __/ __|        &8" + getDescription().getName() + " v" + getDescription().getVersion());
-		MessageHandler.sendConsole("&2| _ \\ _| (__         &8Author: " + getDescription().getAuthors().toString().replace("[", "").replace("]", ""));
+		MessageHandler.sendConsole("&2| _ ) __/ __|        &8" + getPluginMeta().getName() + " v" + getPluginMeta().getVersion());
+		MessageHandler.sendConsole("&2| _ \\ _| (__         &8Author: " + getPluginMeta().getAuthors().toString().replace("[", "").replace("]", ""));
 		MessageHandler.sendConsole("&2|___/_| \\___|");
 		MessageHandler.sendConsole("");
 
 		Config.initialize();
+		Permissions.register();
 		versionManager = new VersionManager();
 		hookManager = new HookManager();
 
+		this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+			commands.registrar().register(
+					"banfromclaimall",
+					"Ban all players from your claim.",
+					List.of("bfca", "bfcall"),
+					new BfcAllCommand());
+
+			commands.registrar().register(
+					"banfromclaim",
+					"Ban a player from your claim.",
+					List.of("bfc", "banfc"),
+					new BfcCommand());
+
+			commands.registrar().register(
+					"banfromclaimlist",
+					"Displays a list of banned players in your claim.",
+					List.of("bfcl", "bfclist"),
+					new BfclistCommand());
+
+			commands.registrar().register(
+					"bfcsafespot",
+					"Set new safespot.",
+					List.of("bfcs", "bfcsetsafe"),
+					new SafeSpot());
+
+			commands.registrar().register(
+					"unbanfromclaim",
+					"Unban a player from your claim.",
+					List.of("ubfc", "unbanfc"),
+					new UnbfcCommand());
+
+			if (Config.KICKMODE) {
+				commands.registrar().register(
+						"kickfromclaim",
+						"Kick a player from your claim.",
+						List.of("kfc", "kickfc"),
+						new KfcCommand());
+			}
+		});
+
 		this.getServer().getPluginManager().registerEvents(new RegionListener(), this);
-		this.getCommand("banfromclaim").setExecutor(new BfcCommand());
-		this.getCommand("unbanfromclaim").setExecutor(new UnbfcCommand());
-		this.getCommand("banfromclaimlist").setExecutor(new BfclistCommand());
-		this.getCommand("banfromclaimall").setExecutor(new BfcAllCommand());
-
-		if (Config.KICKMODE) {
-			this.getCommand("kickfromclaim").setExecutor(new KfcCommand());
-		}
-
 		this.getServer().getPluginManager().registerEvents(new PlayerListener(), this);
-		this.getCommand("bfcsafespot").setExecutor(new SafeSpot());
 
 		createDatafile();
 		Messages.initialize();
@@ -69,13 +104,13 @@ public class BfcPlugin extends JavaPlugin {
 			new CombatScheduler().runTaskTimer(this, 0L, 20L);
 		}
 
-		new UpdateNotification(70897) {
+		new UpdateNotification("banfromclaim") {
 
 			@Override
 			public void onUpdateAvailable() {
 				MessageHandler.sendConsole("&c-----------------------");
-				MessageHandler.sendConsole("&2[" + getDescription().getPrefix() + "] &7Version " + getLatestVersion() + " is now available!");
-				MessageHandler.sendConsole("&2[" + getDescription().getPrefix() + "] &7Download the update at https://www.spigotmc.org/resources/" + getProjectId());
+				MessageHandler.sendConsole("&2[BanFromClaim] &7Version " + getLatestVersion() + " is now available!");
+				MessageHandler.sendConsole("&2[BanFromClaim] &7Download the update at https://modrinth.com/plugin/" + getProjectSlug());
 				MessageHandler.sendConsole("&c-----------------------");
 			}
 		}.runTaskAsynchronously(this);

@@ -1,32 +1,37 @@
 package no.vestlandetmc.BanFromClaim.commands;
 
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import no.vestlandetmc.BanFromClaim.BfcPlugin;
 import no.vestlandetmc.BanFromClaim.config.ClaimData;
 import no.vestlandetmc.BanFromClaim.config.Messages;
 import no.vestlandetmc.BanFromClaim.handler.MessageHandler;
+import no.vestlandetmc.BanFromClaim.handler.Permissions;
 import no.vestlandetmc.BanFromClaim.hooks.RegionHook;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public class BfclistCommand implements CommandExecutor {
+@NullMarked
+@SuppressWarnings({"UnstableApiUsage", "deprecation"})
+public class BfclistCommand implements BasicCommand {
 
-	int countTo = 5;
-	int countFrom = 0;
-	int number = 1;
+	private int countTo = 5;
+	private int countFrom = 0;
+	private int number = 1;
 
 	@Override
-	public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-		if (!(sender instanceof Player player)) {
+	public void execute(CommandSourceStack commandSourceStack, String[] args) {
+		if (!(commandSourceStack.getSender() instanceof Player player)) {
 			MessageHandler.sendConsole("&cThis command can only be used in-game.");
-			return true;
+			return;
 		}
 
 		final ClaimData claimData = new ClaimData();
@@ -40,13 +45,13 @@ public class BfclistCommand implements CommandExecutor {
 				this.countFrom = 5 * number - 5;
 			} else {
 				MessageHandler.sendMessage(player, Messages.UNVALID_NUMBER);
-				return true;
+				return;
 			}
 		}
 
 		if (regionID == null) {
 			MessageHandler.sendMessage(player, Messages.OUTSIDE_CLAIM);
-			return true;
+			return;
 		}
 
 		boolean allowBan = player.hasPermission("bfc.admin") || region.isOwner(player, regionID) || region.isManager(player, regionID);
@@ -55,19 +60,16 @@ public class BfclistCommand implements CommandExecutor {
 
 		if (!allowBan) {
 			MessageHandler.sendMessage(player, Messages.NO_ACCESS);
-			return true;
-
 		} else {
 			MessageHandler.sendMessage(player, Messages.placeholders(Messages.LIST_HEADER, null, player.getDisplayName(), region.getClaimOwnerName(regionID)));
 
 			if (claimData.isAllBanned(regionID)) {
 				MessageHandler.sendMessage(player, Messages.LIST_BAN_ALL);
-				return true;
+				return;
 			}
 
 			if (listPlayers(regionID) == null) {
 				MessageHandler.sendMessage(player, Messages.placeholders(Messages.LIST_EMPTY, null, player.getDisplayName(), region.getClaimOwnerName(regionID)));
-				return true;
 			} else {
 				totalPage = listPlayers(regionID).size() / 5 + 1;
 				for (int i = 0; i < listPlayers(regionID).toArray().length; i++) {
@@ -97,13 +99,25 @@ public class BfclistCommand implements CommandExecutor {
 				}
 			}
 		}
+	}
 
-		return true;
+	@Override
+	public Collection<String> suggest(CommandSourceStack commandSourceStack, String[] args) {
+		return BasicCommand.super.suggest(commandSourceStack, args);
+	}
+
+	@Override
+	public boolean canUse(CommandSender sender) {
+		return BasicCommand.super.canUse(sender);
+	}
+
+	@Override
+	public @Nullable String permission() {
+		return Permissions.LIST.getName();
 	}
 
 	private List<String> listPlayers(String claimID) {
 		final ClaimData claimData = new ClaimData();
-
 		return claimData.bannedPlayers(claimID);
 	}
 
@@ -115,5 +129,4 @@ public class BfclistCommand implements CommandExecutor {
 			return false;
 		}
 	}
-
 }

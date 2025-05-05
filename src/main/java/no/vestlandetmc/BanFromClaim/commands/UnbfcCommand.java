@@ -1,28 +1,33 @@
 package no.vestlandetmc.BanFromClaim.commands;
 
+import io.papermc.paper.command.brigadier.BasicCommand;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import no.vestlandetmc.BanFromClaim.BfcPlugin;
 import no.vestlandetmc.BanFromClaim.config.ClaimData;
 import no.vestlandetmc.BanFromClaim.config.Messages;
 import no.vestlandetmc.BanFromClaim.handler.MessageHandler;
+import no.vestlandetmc.BanFromClaim.handler.Permissions;
 import no.vestlandetmc.BanFromClaim.hooks.RegionHook;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public class UnbfcCommand implements CommandExecutor {
+@NullMarked
+@SuppressWarnings({"deprecation", "UnstableApiUsage"})
+public class UnbfcCommand implements BasicCommand {
 
 	@Override
-	public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-		if (!(sender instanceof Player player)) {
+	public void execute(CommandSourceStack commandSourceStack, String[] args) {
+		if (!(commandSourceStack.getSender() instanceof Player player)) {
 			MessageHandler.sendConsole("&cThis command can only be used in-game.");
-			return true;
+			return;
 		}
 
 		final RegionHook region = BfcPlugin.getHookManager().getActiveRegionHook();
@@ -30,12 +35,12 @@ public class UnbfcCommand implements CommandExecutor {
 
 		if (args.length == 0) {
 			MessageHandler.sendMessage(player, Messages.NO_ARGUMENTS);
-			return true;
+			return;
 		}
 
 		if (regionID == null) {
 			MessageHandler.sendMessage(player, Messages.OUTSIDE_CLAIM);
-			return true;
+			return;
 		}
 
 		final boolean allowBan = player.hasPermission("bfc.admin") || region.isOwner(player, regionID) || region.isManager(player, regionID);
@@ -44,7 +49,7 @@ public class UnbfcCommand implements CommandExecutor {
 
 		if (!allowBan) {
 			MessageHandler.sendMessage(player, Messages.NO_ACCESS);
-			return true;
+			return;
 
 		} else {
 			final String claimOwner = region.getClaimOwnerName(regionID);
@@ -63,7 +68,7 @@ public class UnbfcCommand implements CommandExecutor {
 							if (bannedPlayer.isOnline()) {
 								MessageHandler.sendMessage(bannedPlayer.getPlayer(), Messages.placeholders(Messages.UNBANNED_TARGET, bannedPlayer.getName(), player.getDisplayName(), claimOwner));
 							}
-							return true;
+							return;
 						}
 					}
 				}
@@ -73,8 +78,21 @@ public class UnbfcCommand implements CommandExecutor {
 		if (bPlayer == null) {
 			MessageHandler.sendMessage(player, Messages.placeholders(Messages.NOT_BANNED, args[0], player.getDisplayName(), null));
 		}
+	}
 
-		return true;
+	@Override
+	public Collection<String> suggest(CommandSourceStack commandSourceStack, String[] args) {
+		return BasicCommand.super.suggest(commandSourceStack, args);
+	}
+
+	@Override
+	public boolean canUse(CommandSender sender) {
+		return BasicCommand.super.canUse(sender);
+	}
+
+	@Override
+	public @Nullable String permission() {
+		return Permissions.UNBAN.getName();
 	}
 
 	private List<String> listPlayers(String claimID) {
@@ -86,5 +104,4 @@ public class UnbfcCommand implements CommandExecutor {
 		final ClaimData claimData = new ClaimData();
 		return claimData.setClaimData(claimID, bannedUUID, add);
 	}
-
 }
