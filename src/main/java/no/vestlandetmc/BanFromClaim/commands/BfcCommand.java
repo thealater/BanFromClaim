@@ -50,7 +50,7 @@ public class BfcCommand implements BasicCommand {
 		if (bannedPlayer.getUniqueId().toString().equals(player.getUniqueId().toString())) {
 			MessageHandler.sendMessage(player, Messages.BAN_SELF);
 			return;
-		} else if (!bannedPlayer.hasPlayedBefore()) {
+		} else if (!bannedPlayer.hasPlayedBefore() && !bannedPlayer.isOnline()) {
 			MessageHandler.sendMessage(player, Messages.placeholders(Messages.UNVALID_PLAYERNAME, args[0], player.getDisplayName(), null));
 			return;
 		} else if (region.isOwner(bannedPlayer, regionID)) {

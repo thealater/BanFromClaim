@@ -13,10 +13,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class GriefPreventionHook implements RegionHook, Listener {
+
+	private final Map<Long, CachedOwner> ownerCache = new ConcurrentHashMap<>();
+
+	private static final long OWNER_TTL_MILLIS = 60_000L;
 
 	@Override
 	public boolean isInsideRegion(Player player) {
@@ -85,8 +91,18 @@ public class GriefPreventionHook implements RegionHook, Listener {
 
 	@Override
 	public UUID getOwnerID(String regionID) {
-		final Claim claim = GriefPrevention.instance.dataStore.getClaim(Long.parseLong(regionID));
-		return claim != null ? claim.getOwnerID() : null;
+		final long id = Long.parseLong(regionID);
+		final long now = System.currentTimeMillis();
+		final CachedOwner cached = ownerCache.get(id);
+		if (cached != null && (now - cached.cachedAtMillis) < OWNER_TTL_MILLIS) {
+			return cached.ownerId;
+		}
+		final Claim claim = GriefPrevention.instance.dataStore.getClaim(id);
+		final UUID owner = claim != null ? claim.getOwnerID() : null;
+		if (owner != null) {
+			ownerCache.put(id, new CachedOwner(owner, now));
+		}
+		return owner;
 	}
 
 	@Override
@@ -135,5 +151,17 @@ public class GriefPreventionHook implements RegionHook, Listener {
 			ClaimData.saveDatafile();
 		}
 
+		ownerCache.remove(e.getClaim().getID());
+
+	}
+
+	private static final class CachedOwner {
+		final UUID ownerId;
+		final long cachedAtMillis;
+
+		CachedOwner(UUID ownerId, long cachedAtMillis) {
+			this.ownerId = ownerId;
+			this.cachedAtMillis = cachedAtMillis;
+		}
 	}
 }

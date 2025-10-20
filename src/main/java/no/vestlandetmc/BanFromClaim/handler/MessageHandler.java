@@ -7,11 +7,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class MessageHandler {
 
-	public static ArrayList<String> spamMessageClaim = new ArrayList<>();
+	public static Set<UUID> spamMessageClaim = new HashSet<>();
 
 	public static void sendAction(Player player, String message) {
 		player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacy(colorize(message)));
